@@ -10,6 +10,10 @@ create table pcountry(placename text, countryname text, foreign key(placename) r
 
 APIs:    
 1. Get all nodes data:     
+        ```
         curl -X GET http://localhost:8888/node/ 
+        ```     
 2. Get country name of the place     
+        ```
         curl -X GET http://localhost:8888/country?place=Pune
+        ```
