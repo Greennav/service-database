@@ -27,4 +27,6 @@ CREATE TABLE node (
 Current Status:    
 The program can read the data from pbf file (file because the online file is around 15mb and takes some time to get fetch).     
 The program identifies the nodes from the source and enter them into the database
-Counter can be set to test with less no of nodes total nodes are around 2060543 which will take some time. Test for short dataset first
+Counter can be set to test with less no of nodes total nodes are around 2060543 which will take some time. Test for short dataset first    
+Next Task :
+Update code to store Ways and Relations
