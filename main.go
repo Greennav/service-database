@@ -1,26 +1,25 @@
 package main
 import(
   "github.com/sitaramshelke/service-database/dbhelper"
-	"database/sql"
-	_ "github.com/lib/pq"
-  "fmt"
+  _ "fmt"
+  "github.com/ant0ine/go-json-rest/rest"
+	"log"
+	"net/http"
 )
-var (
-  DBNAME string
-  TABLENAME string
-  UNAME string
-  PASSWD string
-)
+
 func main(){
-  DBNAME,TABLENAME,UNAME,PASSWD = dbhelper.SetupPGDatabase()
-  conn := fmt.Sprintf("postgres://%s:%s/%s?sslmode=disable",UNAME,PASSWD,DBNAME) 
-  // db, err := sql.Open("postgres", conn)
-  _, err := sql.Open("postgres", conn)
+
+  api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
+	router, err := rest.MakeRouter(
+		rest.Get("/node", dbhelper.GetAllNodeData),
+		rest.Get("/country",dbhelper.GetCountryName),
+		// rest.Post("/device",AddDevice),
+	)
 	if err != nil {
-		fmt.Println(err)
-	} else {
-    fmt.Println("Connected to "+DBNAME)
-  }
-  fmt.Println("Tablename",TABLENAME)
+		log.Fatal(err)
+	}
+	api.SetApp(router)
+	log.Fatal(http.ListenAndServe(":8888", api.MakeHandler()))
   
 }
