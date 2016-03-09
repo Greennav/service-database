@@ -1,4 +1,4 @@
-package pbf_test
+package pbf_import
 
 import (
 	"github.com/qedus/osmpbf"
@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-    "testing"
+  "testing"
 )
 
 func TestImportFromHttp(t *testing.T) {
