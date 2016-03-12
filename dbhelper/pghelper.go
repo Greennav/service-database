@@ -18,6 +18,19 @@ var (
   UNAME string
   PASSWD string
 )
+var Vehicles = []string{
+  "Fiat Fiorino",
+  "Smart Roadster",
+  "Sam",
+  "Citysax",
+  "MUTE",
+  "Spyder-S",
+  "Think",
+  "Luis",
+  "STROMOS",
+  "Karabag Fiat 500E",
+  "Lupower Fiat 500E",
+}
 type NodeData struct {
   Placename string  `db:"placename"` 
   Lon float64 `db:"lon"`
@@ -128,5 +141,13 @@ func InsertNode(node *osmpbf.Node) {
     fmt.Println("Error in insert node-node: ",err)
   }
   
+  
+}
+
+func GetAllVehicles(w rest.ResponseWriter, r *rest.Request){
+  
+  data := map[string]interface{}{}
+  data["Vehicles"] = Vehicles
+  w.WriteJson(&data)
   
 }
