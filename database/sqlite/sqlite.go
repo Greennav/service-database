@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"database/sql"
-	"errors"
 	"io/ioutil"
 	"log"
 
@@ -14,14 +13,6 @@ import (
 type SQLiteDatabase struct {
 	FileName string
 	Database *sql.DB
-	tx       *sql.Tx
-}
-
-func (s SQLiteDatabase) getTransaction() *sql.Tx {
-	if s.tx == nil {
-		s.tx, _ = s.Database.Begin()
-	}
-	return s.tx
 }
 
 func CreateEmpty(Name string) (*SQLiteDatabase, error) {
@@ -29,7 +20,7 @@ func CreateEmpty(Name string) (*SQLiteDatabase, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err := sql.Open("sqlite3", Name)
+	db, err := sql.Open("sqlite3", "file:"+Name+"?cache=shared&mode=rwc")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +28,6 @@ func CreateEmpty(Name string) (*SQLiteDatabase, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	return &SQLiteDatabase{FileName: Name, Database: db}, err
 }
 
@@ -46,7 +36,7 @@ func GetByName(Name string) (*SQLiteDatabase, error) {
 	return &SQLiteDatabase{FileName: Name, Database: db}, err
 }
 
-func (s SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
+func (s *SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
 	stmt, err := s.Database.Prepare("insert into nodes(id, lon, lat) values(?, ?, ?)")
 	if err != nil {
 		return err
@@ -63,7 +53,7 @@ func (s SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
 	return nil
 }
 
-func (s SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
+func (s *SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
 	stmt, err := s.Database.Prepare("insert into node_tags(ref, key, value) values(?, ?, ?)")
 	if err != nil {
 		return err
@@ -82,7 +72,7 @@ func (s SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
 	return nil
 }
 
-func (s SQLiteDatabase) WriteWays(Ways chan element.Way) error {
+func (s *SQLiteDatabase) WriteWays(Ways chan element.Way) error {
 	stmt, err := s.Database.Prepare("insert into ways(id) values(?)")
 	if err != nil {
 		return err
@@ -99,7 +89,7 @@ func (s SQLiteDatabase) WriteWays(Ways chan element.Way) error {
 	return nil
 }
 
-func (s SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
+func (s *SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
 	stmt, err := s.Database.Prepare("insert into way_nodes(way, num, node) values(?, ?, ?)")
 	if err != nil {
 		return err
@@ -118,15 +108,12 @@ func (s SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
 	return nil
 }
 
-func (s SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
-	tx, _ := s.Database.Begin()
-	defer tx.Commit()
-	stmt, err := tx.Prepare("insert into way_tags(ref, key, value) values(?, ?, ?)")
+func (s *SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
+	stmt, err := s.Database.Prepare("insert into way_tags(ref, key, value) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	for way := range Ways {
 		for key, value := range way.OSMElem.Tags {
 			_, err := stmt.Exec(way.OSMElem.Id, key, value)
@@ -139,10 +126,60 @@ func (s SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
 	return nil
 }
 
-func (s SQLiteDatabase) WriteRelations(Relations chan element.Relation) error {
-	return errors.New("Not implemented")
+func (s *SQLiteDatabase) WriteRelation(Relations chan element.Relation) error {
+	stmt, err := s.Database.Prepare("insert into relations(id) values(?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for relation := range Relations {
+		_, err := stmt.Exec(relation.Id)
+		if err != nil {
+			return err
+		}
+		log.Println("relation committed")
+	}
+	return nil
 }
 
-func (s SQLiteDatabase) GetEverythingWithinCoordinates(FromLong, FromLat, ToLong, ToLat int) (*database.OSMData, error) {
+//To be Verified
+func (s *SQLiteDatabase) WriteRelationTags(Relations chan element.Relation) error {
+	stmt, err := s.Database.Prepare("insert into relation_tags(ref,key,value) values(?,?,?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for relation := range Relations {
+		for key, value := range relation.OSMElem.Tags {
+			_, err := stmt.Exec(relation.OSMElem.Id, key, value)
+			if err != nil {
+				return err
+			}
+			log.Println("relation tag committed")
+		}
+	}
+	return nil
+}
+
+//To be Verified
+func (s *SQLiteDatabase) WriteRelationMembers(Relations chan element.Relation) error {
+	stmt, err := s.Database.Prepare("insert into members(relation,type,ref,role) values(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for relation := range Relations {
+		for _, member := range relation.Members {
+			_, err := stmt.Exec(relation.Id, member.Type, member.Id, member.Role)
+			if err != nil {
+				return err
+			}
+			log.Println("member committed")
+		}
+	}
+	return nil
+}
+
+func (s *SQLiteDatabase) GetEverythingWithinCoordinates(FromLong, FromLat, ToLong, ToLat int) (*database.OSMData, error) {
 	return nil, nil
 }

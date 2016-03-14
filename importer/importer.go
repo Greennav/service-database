@@ -1,34 +1,40 @@
 package importer
 
 import (
-	"log"
-	"sync"
-
 	"github.com/GreenNav/service-database/database"
 	"github.com/omniscale/imposm3/element"
 	"github.com/omniscale/imposm3/parser/pbf"
+	"log"
+	"sync"
+)
+
+const (
+	CHANNELSIZE = 10
 )
 
 func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
-	pbfNodes := make(chan []element.Node)
-	pbfWays := make(chan []element.Way)
+	pbfNodes := make(chan []element.Node, CHANNELSIZE)
+	pbfWays := make(chan []element.Way, CHANNELSIZE)
+	pbfRelations := make(chan []element.Relation, CHANNELSIZE)
 
-	nodesToWrite := make(chan element.Node)
-	nodeTagsToWrite := make(chan element.Node)
+	nodesToWrite := make(chan element.Node, CHANNELSIZE)
+	nodeTagsToWrite := make(chan element.Node, CHANNELSIZE)
 
-	waysToWrite := make(chan element.Way)
-	wayNodesToWrite := make(chan element.Way)
-	wayTagsToWrite := make(chan element.Way)
+	waysToWrite := make(chan element.Way, CHANNELSIZE)
+	wayNodesToWrite := make(chan element.Way, CHANNELSIZE)
+	wayTagsToWrite := make(chan element.Way, CHANNELSIZE)
+
+	relationChannel := make(chan element.Relation, CHANNELSIZE)
+	relationTagsChannel := make(chan element.Relation, CHANNELSIZE)
+	relationMembersChannel := make(chan element.Relation, CHANNELSIZE)
 
 	pbfFile, err := pbf.Open(pbfFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	wg := sync.WaitGroup{}
-	parser := pbf.NewParser(pbfFile, nil, pbfNodes, pbfWays, nil)
-
-	wg.Add(5)
+	parser := pbf.NewParser(pbfFile, nil, pbfNodes, pbfWays, pbfRelations)
+	wg.Add(8)
 	go func() {
 		err := db.WriteNodes(nodesToWrite)
 		if err != nil {
@@ -64,7 +70,27 @@ func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
 		}
 		wg.Done()
 	}()
-
+	go func() {
+		err := db.WriteRelation(relationChannel)
+		if err != nil {
+			log.Println(err.Error(), "(table relation_nodes)")
+		}
+		wg.Done()
+	}()
+	go func() {
+		err := db.WriteRelationTags(relationTagsChannel)
+		if err != nil {
+			log.Println(err.Error(), "(table relation_tags)")
+		}
+		wg.Done()
+	}()
+	go func() {
+		err := db.WriteRelationMembers(relationMembersChannel)
+		if err != nil {
+			log.Println(err.Error(), "(table relation_members)")
+		}
+		wg.Done()
+	}()
 	go func() {
 		for nodes := range pbfNodes {
 			for _, node := range nodes {
@@ -87,7 +113,18 @@ func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
 		close(wayNodesToWrite)
 		close(wayTagsToWrite)
 	}()
-
+	go func() {
+		for relations := range pbfRelations {
+			for _, relation := range relations {
+				relationChannel <- relation
+				relationMembersChannel <- relation
+				relationTagsChannel <- relation
+			}
+		}
+		close(relationChannel)
+		close(relationMembersChannel)
+		close(relationTagsChannel)
+	}()
 	parser.Parse()
 	wg.Wait()
 }

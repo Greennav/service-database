@@ -1,4 +1,4 @@
-CREATE TABLE nodes (
+CREATE TABLE IF NOT EXISTS nodes (
     id INTEGER NOT NULL PRIMARY KEY,
     user TEXT,
     timestamp TEXT,
@@ -7,48 +7,48 @@ CREATE TABLE nodes (
     marked INTEGER
 );
 
-CREATE TABLE node_tags (
+CREATE TABLE IF NOT EXISTS node_tags (
     ref INTEGER NOT NULL,
     key TEXT,
     value TEXT,
     marked INTEGER
 );
 
-CREATE TABLE ways (
+CREATE TABLE IF NOT EXISTS ways (
     id INTEGER NOT NULL PRIMARY KEY,
     user TEXT,
     timestamp TEXT,
     marked INTEGER
 );
 
-CREATE TABLE way_tags (
+CREATE TABLE IF NOT EXISTS way_tags (
     ref INTEGER NOT NULL,
     key TEXT,
     value TEXT,
     marked INTEGER
 );
 
-CREATE TABLE way_nodes (
+CREATE TABLE IF NOT EXISTS way_nodes (
     way INTEGER NOT NULL,
     num INTEGER NOT NULL,
     node INTEGER NOT NULL
 );
 
-CREATE TABLE relations (
+CREATE TABLE IF NOT EXISTS relations (
     id INTEGER NOT NULL PRIMARY KEY,
     user TEXT,
     timestamp TEXT,
     marked INTEGER
 );
 
-CREATE TABLE relation_tags (
+CREATE TABLE IF NOT EXISTS relation_tags (
     ref INTEGER NOT NULL,
     key TEXT,
     value TEXT,
     marked INTEGER
 );
 
-CREATE TABLE members (
+CREATE TABLE IF NOT EXISTS members (
     relation INTEGER NOT NULL,
     type TEXT,
     ref INTEGER NOT NULL,
