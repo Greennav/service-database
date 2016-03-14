@@ -1,6 +1,5 @@
 package main
 
 import (
-  "./importer"
+	_ "github.com/GreenNav/service-database/importer"
 )
-
