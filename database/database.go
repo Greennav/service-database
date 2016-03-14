@@ -11,9 +11,11 @@ type OSMData struct {
 }
 
 type OSMDatabase interface {
-	WriteNodes(Nodes chan []element.Node) error
-	WriteWays(Ways chan []element.Way) error
-	WriteRelations(Relations chan []element.Relation) error
+	WriteNodes(Nodes chan element.Node) error
+	WriteNodeTags(Nodes chan element.Node) error
+	WriteWays(Ways chan element.Way) error
+	WriteWayNodes(Ways chan element.Way) error
+  WriteWayTags(Ways chan element.Way) error
 
 	GetEverythingWithinCoordinates(FromLong, FromLat, ToLong, ToLat int) (*OSMData, error)
 }
