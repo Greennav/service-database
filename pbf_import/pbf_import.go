@@ -26,7 +26,7 @@ func ImportFromHttp() {
 		log.Fatal(err)
 	}
 
-	var nc, wc, rc uint64
+	var nodecount, wordcount, relationcount uint64
 	count := 100 //for shorter test time
 	for {
 		if v, err := d.Decode(); err == io.EOF {
@@ -37,13 +37,13 @@ func ImportFromHttp() {
 			switch v := v.(type) {
 			case *osmpbf.Node:
 				dbhelper.InsertNode(v)
-				nc++
+				nodecount++
 			case *osmpbf.Way:
 				// Process Way v.
-				wc++
+				wordcount++
 			case *osmpbf.Relation:
 				// Process Relation v.
-				rc++
+				relationcount++
 			default:
 				log.Fatalf("unknown type %T\n", v)
 			}
@@ -53,7 +53,7 @@ func ImportFromHttp() {
 			break
 		}
 	}
-	fmt.Printf("Nodes: %d, Ways: %d, Relations: %d\n", nc, wc, rc)
+	fmt.Printf("Nodes: %d, Ways: %d, Relations: %d\n", nodecount, wordcount, relationcount)
 
 
 }

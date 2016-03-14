@@ -8,7 +8,11 @@ import (
 	"runtime"
   "testing"
 )
-
+const (
+	EXACT_NODE_COUNT = 2060543
+	EXACT_WAY_COUNT = 345004
+	EXACT_RELATION_COUNT = 6877
+)
 func TestImportFromHttp(t *testing.T) {
 	// f, err := os.Open("greater-london-140324.osm.pbf")
 	response, err := http.Get("http://download.bbbike.org/osm/bbbike/Luebeck/Luebeck.osm.pbf")
@@ -24,7 +28,7 @@ func TestImportFromHttp(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	var nc, wc, rc uint64
+	var nodecount, waycount, relationcount uint64
 	for {
 		if v, err := d.Decode(); err == io.EOF {
 			break
@@ -34,26 +38,26 @@ func TestImportFromHttp(t *testing.T) {
 			switch v := v.(type) {
 			case *osmpbf.Node:
 				// Process Node v.
-				nc++
+				nodecount++
 			case *osmpbf.Way:
 				// Process Way v.
-				wc++
+				waycount++
 			case *osmpbf.Relation:
 				// Process Relation v.
-				rc++
+				relationcount++
 			default:
 				log.Fatalf("unknown type %T\n", v)
 			}
 		}
 	}
 
-    if nc != 2060543 {
+    if nodecount != EXACT_NODE_COUNT {
         t.Error("Node count not exact")
     }
-    if wc != 345004 {
+    if waycount != EXACT_WAY_COUNT {
         t.Error("Way count not exact")
     }
-    if rc != 6877 {
+    if relationcount != EXACT_RELATION_COUNT {
         t.Error("Relation count not exact")
     }
 }

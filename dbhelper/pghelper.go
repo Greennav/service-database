@@ -57,15 +57,15 @@ func GetAllNodeData(w rest.ResponseWriter, r *rest.Request){
   if err != nil {
     fmt.Println(err)
   } else {
-    d := NodeData{}
+    single_node:= NodeData{}
     data := []NodeData{}
     for rows.Next() {
-      err = rows.Scan(&d.Placename,&d.Lon,&d.Lat)
+      err = rows.Scan(&single_node.Placename,&single_node.Lon,&single_node.Lat)
       if err != nil {
         fmt.Println("Error in query",err)
       } else {
-        fmt.Println("Place Name: ",d.Placename,"Longitude: ",d.Lon,"Latitude: ",d.Lat)
-        data = append(data,d)
+        fmt.Println("Place Name: ",single_node.Placename,"Longitude: ",single_node.Lon,"Latitude: ",single_node.Lat)
+        data = append(data,single_node)
       }
     }
     w.WriteJson(&data)
@@ -80,14 +80,14 @@ func GetNodeData(w rest.ResponseWriter, r *rest.Request){
   if err != nil {
     fmt.Println(err)
   } else {
-    d := NodeData{}
+    single_node := NodeData{}
     for rows.Next() {
-      err = rows.Scan(&d.Placename,&d.Lon,&d.Lat,&d.Countryname)
+      err = rows.Scan(&single_node.Placename,&single_node.Lon,&single_node.Lat,&single_node.Countryname)
       if err != nil {
         fmt.Println("Error in query",err)
       } else {
-        fmt.Println("Place Name: ",d.Placename,"Longitude: ",d.Lon,"Latitude: ",d.Lat,"Countryname: ",d.Countryname)
-        w.WriteJson(&d)
+        fmt.Println("Place Name: ",single_node.Placename,"Longitude: ",single_node.Lon,"Latitude: ",single_node.Lat,"Countryname: ",single_node.Countryname)
+        w.WriteJson(&single_node)
       }
     }
     
@@ -95,26 +95,26 @@ func GetNodeData(w rest.ResponseWriter, r *rest.Request){
   
 }
 func GetCountryName(w rest.ResponseWriter, r *rest.Request){
-  pname := r.FormValue("place")
-  type data struct {
+  placename := r.FormValue("place")
+  type countryname struct {
     Name string
   }
-  d := data{}
-  countrydata := []data{}
+  country := countryname{}
+  countrydata := []countryname{}
   
-  query := fmt.Sprintf("SELECT countryname FROM pcountry where placename='%v'",pname)
+  query := fmt.Sprintf("SELECT countryname FROM pcountry where placename='%v'",placename)
   fmt.Println(query)
   rows, err := db.Query(query)
   if err != nil {
     fmt.Println(err)
   } else {
     for rows.Next() {
-      err = rows.Scan(&d.Name)
+      err = rows.Scan(&country.Name)
       if err != nil {
         fmt.Println("Error in query",err)
       } else {
-        fmt.Println("Country Name: ",d.Name)
-        countrydata = append(countrydata,d)
+        fmt.Println("Country Name: ",country.Name)
+        countrydata = append(countrydata,country)
       }
     }
   }
@@ -128,8 +128,8 @@ func InsertNode(node *osmpbf.Node) {
   jsonstring,e := json.Marshal(node.Tags)
   // fmt.Println("Json: ",string(jsonstring))
   info := node.Info
-  ts := fmt.Sprintf("%v",info.Timestamp)
-  err = db.QueryRow("INSERT INTO info(version,timestamp,changeset,uid,\"user\",visible) VALUES($1,$2,$3,$4,$5,$6) returning id;", info.Version,ts,info.Changeset,info.Uid,info.User,info.Visible).Scan(&lastInfoId)
+  tstamp := fmt.Sprintf("%v",info.Timestamp)
+  err = db.QueryRow("INSERT INTO info(version,timestamp,changeset,uid,\"user\",visible) VALUES($1,$2,$3,$4,$5,$6) returning id;", info.Version,tstamp,info.Changeset,info.Uid,info.User,info.Visible).Scan(&lastInfoId)
   if err != nil {
     fmt.Println("Error in insert node-info: ",err)
   }
@@ -146,8 +146,8 @@ func InsertNode(node *osmpbf.Node) {
 
 func GetAllVehicles(w rest.ResponseWriter, r *rest.Request){
   
-  data := map[string]interface{}{}
-  data["Vehicles"] = Vehicles
-  w.WriteJson(&data)
+  vehicleslist := map[string]interface{}{}
+  vehicleslist["Vehicles"] = Vehicles
+  w.WriteJson(&vehicleslist)
   
 }
