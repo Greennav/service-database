@@ -1,18 +1,23 @@
 package importer
 
 import (
+	"log"
+	"sync"
+
 	"github.com/GreenNav/service-database/database"
 	"github.com/omniscale/imposm3/element"
 	"github.com/omniscale/imposm3/parser/pbf"
-	"log"
-	"sync"
 )
 
 const (
-	CHANNELSIZE = 10
+	// CHANNELSIZE is used as size of the cache for nodes/ways/relations
+	// during conversion from pbf file to the database
+	CHANNELSIZE = 4
 )
 
-func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
+// WriteToDatabase takes a pbf file and writes it to any database
+// that is conform to the database/OSMDatabase type
+func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 	pbfNodes := make(chan []element.Node, CHANNELSIZE)
 	pbfWays := make(chan []element.Way, CHANNELSIZE)
 	pbfRelations := make(chan []element.Relation, CHANNELSIZE)
@@ -28,66 +33,68 @@ func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
 	relationTagsChannel := make(chan element.Relation, CHANNELSIZE)
 	relationMembersChannel := make(chan element.Relation, CHANNELSIZE)
 
-	pbfFile, err := pbf.Open(pbfFileName)
+	pbfFile, err := pbf.Open(PbfFileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+
 	wg := sync.WaitGroup{}
 	parser := pbf.NewParser(pbfFile, nil, pbfNodes, pbfWays, pbfRelations)
+
 	wg.Add(8)
 	go func() {
-		err := db.WriteNodes(nodesToWrite)
+		err := Db.WriteNodes(nodesToWrite)
 		if err != nil {
-			log.Fatal(err.Error() + "(table nodes)")
+			log.Fatal(err.Error() + " (table nodes)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteNodeTags(nodeTagsToWrite)
+		err := Db.WriteNodeTags(nodeTagsToWrite)
 		if err != nil {
-			log.Fatal(err.Error() + "(table node_tags)")
+			log.Fatal(err.Error() + " (table node_tags)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteWays(waysToWrite)
+		err := Db.WriteWays(waysToWrite)
 		if err != nil {
-			log.Fatal(err.Error() + "(table ways)")
+			log.Fatal(err.Error() + " (table ways)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteWayTags(wayTagsToWrite)
+		err := Db.WriteWayTags(wayTagsToWrite)
 		if err != nil {
-			log.Fatal(err.Error() + "(table way_tags)")
+			log.Fatal(err.Error() + " (table way_tags)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteWayNodes(wayNodesToWrite)
+		err := Db.WriteWayNodes(wayNodesToWrite)
 		if err != nil {
-			log.Fatal(err.Error() + "(table way_nodes)")
+			log.Fatal(err.Error() + " (table way_nodes)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteRelation(relationChannel)
+		err := Db.WriteRelation(relationChannel)
 		if err != nil {
-			log.Println(err.Error(), "(table relation_nodes)")
+			log.Fatal(err.Error(), " (table relation_nodes)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteRelationTags(relationTagsChannel)
+		err := Db.WriteRelationTags(relationTagsChannel)
 		if err != nil {
-			log.Println(err.Error(), "(table relation_tags)")
+			log.Fatal(err.Error(), " (table relation_tags)")
 		}
 		wg.Done()
 	}()
 	go func() {
-		err := db.WriteRelationMembers(relationMembersChannel)
+		err := Db.WriteRelationMembers(relationMembersChannel)
 		if err != nil {
-			log.Println(err.Error(), "(table relation_members)")
+			log.Fatal(err.Error(), " (table relation_members)")
 		}
 		wg.Done()
 	}()
@@ -128,37 +135,9 @@ func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
 
 	parser.Parse()
 	wg.Wait()
-	if err := db.Close(); err != nil {
-		log.Fatal(err)
+	if err := Db.Close(); err != nil {
+		return err
 	}
-}
 
-func WriteNodesToDatabase(pbfFileName string, db database.OSMDatabase) {
-	pbfNodes := make(chan []element.Node)
-
-	nodesToWrite := make(chan element.Node)
-	pbfFile, err := pbf.Open(pbfFileName)
-	wg := sync.WaitGroup{}
-	if err != nil {
-		log.Fatal(err)
-	}
-	pbfParser := pbf.NewParser(pbfFile, nil, pbfNodes, nil, nil)
-	wg.Add(1)
-	go func() {
-		err := db.WriteNodes(nodesToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + "(table nodes)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		for nodes := range pbfNodes {
-			for _, node := range nodes {
-				nodesToWrite <- node
-			}
-		}
-		close(nodesToWrite)
-	}()
-	pbfParser.Parse()
-	wg.Wait()
+	return nil
 }

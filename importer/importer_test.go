@@ -1,22 +1,26 @@
 package importer_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/GreenNav/service-database/database"
 	"github.com/GreenNav/service-database/database/sqlite"
 	"github.com/GreenNav/service-database/importer"
-	//"os"
-	"testing"
 )
 
 const (
 	TESTDATABASE = "test_importer.db"
 )
 
-func TestWriteToDatabase(t *testing.T) {
-	db, err := sqlite.CreateEmpty(TESTDATABASE)
+func TestWriteToSQLiteDatabase(t *testing.T) {
+	db, err := sqlite.CreateEmpty(TESTDATABASE, "../schemata/sqlite.sql")
 	if err != nil {
 		t.Error(err)
 	}
-	importer.WriteToDatabase("./monaco-20150428.osm.pbf", database.OSMDatabase(db))
-	//	os.Remove(TESTDATABASE)
+	err = importer.WriteToDatabase("./monaco.osm.pbf", database.OSMDatabase(db))
+	if err != nil {
+		t.Error(err)
+	}
+	os.Remove(TESTDATABASE)
 }
