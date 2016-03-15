@@ -20,4 +20,5 @@ type OSMDatabase interface {
 	WriteRelationTags(Relations chan element.Relation) error
 	WriteRelationMembers(Relations chan element.Relation) error
 	GetEverythingWithinCoordinates(FromLong, FromLat, ToLong, ToLat int) (*OSMData, error)
+	Close() error
 }

@@ -11,8 +11,9 @@ import (
 )
 
 type SQLiteDatabase struct {
-	FileName string
-	Database *sql.DB
+	FileName    string
+	Database    *sql.DB
+	Transaction *sql.Tx
 }
 
 func CreateEmpty(Name string) (*SQLiteDatabase, error) {
@@ -28,7 +29,11 @@ func CreateEmpty(Name string) (*SQLiteDatabase, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &SQLiteDatabase{FileName: Name, Database: db}, err
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &SQLiteDatabase{FileName: Name, Database: db, Transaction: tx}, err
 }
 
 func GetByName(Name string) (*SQLiteDatabase, error) {
@@ -37,7 +42,7 @@ func GetByName(Name string) (*SQLiteDatabase, error) {
 }
 
 func (s *SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
-	stmt, err := s.Database.Prepare("insert into nodes(id, lon, lat) values(?, ?, ?)")
+	stmt, err := s.Transaction.Prepare("insert into nodes(id, lon, lat) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -54,7 +59,7 @@ func (s *SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
 }
 
 func (s *SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
-	stmt, err := s.Database.Prepare("insert into node_tags(ref, key, value) values(?, ?, ?)")
+	stmt, err := s.Transaction.Prepare("insert into node_tags(ref, key, value) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -73,7 +78,7 @@ func (s *SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
 }
 
 func (s *SQLiteDatabase) WriteWays(Ways chan element.Way) error {
-	stmt, err := s.Database.Prepare("insert into ways(id) values(?)")
+	stmt, err := s.Transaction.Prepare("insert into ways(id) values(?)")
 	if err != nil {
 		return err
 	}
@@ -90,7 +95,7 @@ func (s *SQLiteDatabase) WriteWays(Ways chan element.Way) error {
 }
 
 func (s *SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
-	stmt, err := s.Database.Prepare("insert into way_nodes(way, num, node) values(?, ?, ?)")
+	stmt, err := s.Transaction.Prepare("insert into way_nodes(way, num, node) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -109,7 +114,7 @@ func (s *SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
 }
 
 func (s *SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
-	stmt, err := s.Database.Prepare("insert into way_tags(ref, key, value) values(?, ?, ?)")
+	stmt, err := s.Transaction.Prepare("insert into way_tags(ref, key, value) values(?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -127,7 +132,7 @@ func (s *SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
 }
 
 func (s *SQLiteDatabase) WriteRelation(Relations chan element.Relation) error {
-	stmt, err := s.Database.Prepare("insert into relations(id) values(?)")
+	stmt, err := s.Transaction.Prepare("insert into relations(id) values(?)")
 	if err != nil {
 		return err
 	}
@@ -144,7 +149,7 @@ func (s *SQLiteDatabase) WriteRelation(Relations chan element.Relation) error {
 
 //To be Verified
 func (s *SQLiteDatabase) WriteRelationTags(Relations chan element.Relation) error {
-	stmt, err := s.Database.Prepare("insert into relation_tags(ref,key,value) values(?,?,?)")
+	stmt, err := s.Transaction.Prepare("insert into relation_tags(ref,key,value) values(?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -163,7 +168,7 @@ func (s *SQLiteDatabase) WriteRelationTags(Relations chan element.Relation) erro
 
 //To be Verified
 func (s *SQLiteDatabase) WriteRelationMembers(Relations chan element.Relation) error {
-	stmt, err := s.Database.Prepare("insert into members(relation,type,ref,role) values(?,?,?,?)")
+	stmt, err := s.Transaction.Prepare("insert into members(relation,type,ref,role) values(?,?,?,?)")
 	if err != nil {
 		return err
 	}
@@ -176,6 +181,18 @@ func (s *SQLiteDatabase) WriteRelationMembers(Relations chan element.Relation) e
 			}
 			log.Println("member committed")
 		}
+	}
+	return nil
+}
+
+func (s *SQLiteDatabase) Close() error {
+	err := s.Transaction.Commit()
+	if err != nil {
+		return err
+	}
+	err = s.Database.Close()
+	if err != nil {
+		return err
 	}
 	return nil
 }

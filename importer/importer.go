@@ -125,8 +125,12 @@ func WriteToDatabase(pbfFileName string, db database.OSMDatabase) {
 		close(relationMembersChannel)
 		close(relationTagsChannel)
 	}()
+
 	parser.Parse()
 	wg.Wait()
+	if err := db.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func WriteNodesToDatabase(pbfFileName string, db database.OSMDatabase) {
