@@ -9,22 +9,26 @@ Install golang and make sure it is present in the environment $PATH:
 Check ```go env``` to make sure everything is set.
   
 1. Get go-json-rest package
-    ```
-    go get -u github.com/omniscale/imposm3
-    go get -u github.com/mattn/go-sqlite3
-    ```
+
+```bash
+  go get -u github.com/omniscale/imposm3
+  go get -u github.com/mattn/go-sqlite3
+```
+
 2. Fork the service-database repo and clone it to your $gopath/github.com/{username}/    
 3. Go to the repository and run
-    ```
-    go build service-database.go
-    ./database-service -i importer/monaco.osm.pbf -f test.db
-    sqlite3 test.db
-    ```
-    ```SQL
-    sqlite> select count(*) from nodes;
-    978
-    ```    
-    
+
+```
+  go build service-database.go
+  ./database-service -i importer/monaco.osm.pbf -f test.db
+  sqlite3 test.db
+```
+
+```SQL
+  sqlite> select count(*) from nodes;
+  978
+```    
+  
 ## Current Status
 
 The SQLite subpackage can import and write all nodes, ways and relations of a pbf file including tags. The nodes of a way are currently not imported somehow. Reading of the exported data from the database is completely missing; so is the REST-interface for queries and the PostgreSQL interface.
