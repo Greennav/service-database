@@ -4,7 +4,7 @@ import (
 	"github.com/GreenNav/service-database/database"
 	"github.com/GreenNav/service-database/database/sqlite"
 	"github.com/GreenNav/service-database/importer"
-	"os"
+	//"os"
 	"testing"
 )
 
@@ -13,7 +13,10 @@ const (
 )
 
 func TestWriteToDatabase(t *testing.T) {
-	db, _ := sqlite.CreateEmpty(TESTDATABASE)
+	db, err := sqlite.CreateEmpty(TESTDATABASE)
+	if err != nil {
+		t.Error(err)
+	}
 	importer.WriteToDatabase("./monaco-20150428.osm.pbf", database.OSMDatabase(db))
-	os.Remove(TESTDATABASE)
+	//	os.Remove(TESTDATABASE)
 }
