@@ -17,7 +17,7 @@ var importFlagDescription = "Pbf file to import"
 
 var dbTypeFlag = flag.String("dbtype", "sqlite", dbTypeFlagDescription)
 var dbFileFlag = flag.String("dbfile", "gn.db", dbFileFlagDescription)
-var dbSchemaFlag = flag.String("dbschema", "gn.db", dbSchemaFlagDescription)
+var dbSchemaFlag = flag.String("dbschema", "./schemata/sqlite.sql", dbSchemaFlagDescription)
 var importFlag = flag.String("import", "", importFlagDescription)
 
 func init() {
