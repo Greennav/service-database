@@ -16,7 +16,7 @@ type SQLiteDatabase struct {
 	Transaction *sql.Tx
 }
 
-func CreateEmpty(Name string, SchemaFile string) (*SQLiteDatabase , error) {
+func CreateEmpty(Name string, SchemaFile string) (*SQLiteDatabase, error) {
 	schema, err := ioutil.ReadFile(SchemaFile)
 	if err != nil {
 		log.Fatal(err)
