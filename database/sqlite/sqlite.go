@@ -16,8 +16,8 @@ type SQLiteDatabase struct {
 	Transaction *sql.Tx
 }
 
-func CreateEmpty(Name string) (*SQLiteDatabase, error) {
-	schema, err := ioutil.ReadFile("./schema.sql")
+func CreateEmpty(Name string, SchemaFile string) (*SQLiteDatabase , error) {
+	schema, err := ioutil.ReadFile(SchemaFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func CreateEmpty(Name string) (*SQLiteDatabase, error) {
 }
 
 func GetByName(Name string) (*SQLiteDatabase, error) {
-	db, err := sql.Open("sqlite3", Name)
+	db, err := sql.Open("sqlite3", "file:"+Name+"?cache=shared&mode=rwc")
 	return &SQLiteDatabase{FileName: Name, Database: db}, err
 }
 
@@ -50,7 +50,6 @@ func (s *SQLiteDatabase) WriteNodes(Nodes chan element.Node) error {
 
 	for node := range Nodes {
 		_, err = stmt.Exec(node.OSMElem.Id, node.Long, node.Lat)
-		log.Print("node commited")
 		if err != nil {
 			return err
 		}
@@ -68,7 +67,6 @@ func (s *SQLiteDatabase) WriteNodeTags(Nodes chan element.Node) error {
 	for node := range Nodes {
 		for key, value := range node.OSMElem.Tags {
 			_, err := stmt.Exec(node.OSMElem.Id, key, value)
-			log.Print("node tag commited")
 			if err != nil {
 				return err
 			}
@@ -86,7 +84,6 @@ func (s *SQLiteDatabase) WriteWays(Ways chan element.Way) error {
 
 	for way := range Ways {
 		_, err = stmt.Exec(way.Id)
-		log.Print("way commited")
 		if err != nil {
 			return err
 		}
@@ -104,7 +101,6 @@ func (s *SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
 	for way := range Ways {
 		for num, node := range way.Nodes {
 			_, err = stmt.Exec(way.Id, num, node.Id)
-			log.Print("way node commited")
 			if err != nil {
 				return err
 			}
@@ -122,7 +118,6 @@ func (s *SQLiteDatabase) WriteWayTags(Ways chan element.Way) error {
 	for way := range Ways {
 		for key, value := range way.OSMElem.Tags {
 			_, err := stmt.Exec(way.OSMElem.Id, key, value)
-			log.Print("way tag commited")
 			if err != nil {
 				return err
 			}
@@ -142,12 +137,10 @@ func (s *SQLiteDatabase) WriteRelation(Relations chan element.Relation) error {
 		if err != nil {
 			return err
 		}
-		log.Println("relation committed")
 	}
 	return nil
 }
 
-//To be Verified
 func (s *SQLiteDatabase) WriteRelationTags(Relations chan element.Relation) error {
 	stmt, err := s.Transaction.Prepare("insert into relation_tags(ref,key,value) values(?,?,?)")
 	if err != nil {
@@ -160,13 +153,11 @@ func (s *SQLiteDatabase) WriteRelationTags(Relations chan element.Relation) erro
 			if err != nil {
 				return err
 			}
-			log.Println("relation tag committed")
 		}
 	}
 	return nil
 }
 
-//To be Verified
 func (s *SQLiteDatabase) WriteRelationMembers(Relations chan element.Relation) error {
 	stmt, err := s.Transaction.Prepare("insert into members(relation,type,ref,role) values(?,?,?,?)")
 	if err != nil {
@@ -179,7 +170,6 @@ func (s *SQLiteDatabase) WriteRelationMembers(Relations chan element.Relation) e
 			if err != nil {
 				return err
 			}
-			log.Println("member committed")
 		}
 	}
 	return nil
