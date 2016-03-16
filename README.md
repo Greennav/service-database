@@ -16,6 +16,7 @@ Check ```go env``` to make sure everything is set.
 2. Fork the service-database repo and add new remote to your local copy of package
     ```bash
   cd $GOPATH/src/github.com/Greennav/service-database
+  go get -u
   git remote add fork git@github.com:{GITHUB_USER}/service-database.git
 ```   
 
