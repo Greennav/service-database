@@ -18,6 +18,7 @@ const (
 // WriteToDatabase takes a pbf file and writes it to any database
 // that is conform to the database/OSMDatabase type
 func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
+	pbfCoords := make(chan []element.Node, CHANNELSIZE)
 	pbfNodes := make(chan []element.Node, CHANNELSIZE)
 	pbfWays := make(chan []element.Way, CHANNELSIZE)
 	pbfRelations := make(chan []element.Relation, CHANNELSIZE)
@@ -39,7 +40,7 @@ func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 	}
 
 	wg := sync.WaitGroup{}
-	parser := pbf.NewParser(pbfFile, nil, pbfNodes, pbfWays, pbfRelations)
+	parser := pbf.NewParser(pbfFile, pbfCoords, pbfNodes, pbfWays, pbfRelations)
 
 	wg.Add(8)
 	go func() {
@@ -99,13 +100,19 @@ func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 		wg.Done()
 	}()
 	go func() {
-		for nodes := range pbfNodes {
+		for nodes := range pbfCoords {
 			for _, node := range nodes {
 				nodesToWrite <- node
-				nodeTagsToWrite <- node
 			}
 		}
 		close(nodesToWrite)
+	}()
+	go func() {
+		for nodes := range pbfNodes {
+			for _, node := range nodes {
+				nodeTagsToWrite <- node
+			}
+		}
 		close(nodeTagsToWrite)
 	}()
 	go func() {

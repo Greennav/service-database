@@ -99,8 +99,8 @@ func (s *SQLiteDatabase) WriteWayNodes(Ways chan element.Way) error {
 	defer stmt.Close()
 
 	for way := range Ways {
-		for num, node := range way.Nodes {
-			_, err = stmt.Exec(way.Id, num, node.Id)
+		for index, nodeId := range way.Refs {
+			_, err = stmt.Exec(way.Id, index, nodeId)
 			if err != nil {
 				return err
 			}
