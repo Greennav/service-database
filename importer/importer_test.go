@@ -1,7 +1,7 @@
 package importer_test
 
 import (
-	//	"os"
+	"os"
 	"testing"
 
 	"github.com/GreenNav/service-database/database"
@@ -22,5 +22,5 @@ func TestWriteToSQLiteDatabase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	//	os.Remove(TESTDATABASE)
+	os.Remove(TESTDATABASE)
 }
