@@ -22,7 +22,7 @@ Check ```go env``` to make sure everything is set.
 
 3. Go to the repository and run
     ```
-  go build service-database.go
+  go build database-service.go
   ./database-service -i importer/monaco.osm.pbf -f test.db
   sqlite3 test.db
 ```
