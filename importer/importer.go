@@ -18,6 +18,10 @@ const (
 // WriteToDatabase takes a pbf file and writes it to any database
 // that is conform to the database/OSMDatabase type
 func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
+	err := Db.NewTransaction()
+	if err != nil {
+		log.Fatal(err)
+	}
 	pbfCoords := make(chan []element.Node, CHANNELSIZE)
 	pbfNodes := make(chan []element.Node, CHANNELSIZE)
 	pbfWays := make(chan []element.Way, CHANNELSIZE)
@@ -142,7 +146,7 @@ func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 
 	parser.Parse()
 	wg.Wait()
-	if err := Db.Close(); err != nil {
+	if err := Db.Commit(); err != nil {
 		return err
 	}
 

@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS relation_tags (
 
 CREATE TABLE IF NOT EXISTS members (
     relation INTEGER NOT NULL,
-    type TEXT,
+    type INTEGER,
     ref INTEGER NOT NULL,
     role TEXT,
     marked INTEGER

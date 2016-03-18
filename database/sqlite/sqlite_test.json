@@ -1,0 +1,3 @@
+{"Node":{"tags":{"tourism":"viewpoint"},"lat":42.589862000000004,"lon":1.517808, "Id":100},
+"Way":{"tags":{"highway":"primary"},"refs":[3655224911],"Id":123},
+"Relation":{"tags":{"wikipedia":"fr:Ariège (département)"},"members":[{"id":156866217,"type":1,"role":"outer"}],"Id":102}}
