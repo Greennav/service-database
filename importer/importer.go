@@ -47,62 +47,18 @@ func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 	parser := pbf.NewParser(pbfFile, pbfCoords, pbfNodes, pbfWays, pbfRelations)
 
 	wg.Add(8)
-	go func() {
-		err := Db.WriteNodes(nodesToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + " (table nodes)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteNodeTags(nodeTagsToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + " (table node_tags)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteWays(waysToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + " (table ways)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteWayTags(wayTagsToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + " (table way_tags)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteWayNodes(wayNodesToWrite)
-		if err != nil {
-			log.Fatal(err.Error() + " (table way_nodes)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteRelation(relationChannel)
-		if err != nil {
-			log.Fatal(err.Error(), " (table relation_nodes)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteRelationTags(relationTagsChannel)
-		if err != nil {
-			log.Fatal(err.Error(), " (table relation_tags)")
-		}
-		wg.Done()
-	}()
-	go func() {
-		err := Db.WriteRelationMembers(relationMembersChannel)
-		if err != nil {
-			log.Fatal(err.Error(), " (table relation_members)")
-		}
-		wg.Done()
-	}()
+
+	go writeNodeHelper(Db.WriteNodes, nodesToWrite, "Nodes", &wg)
+	go writeNodeHelper(Db.WriteNodeTags, nodeTagsToWrite, "Node Tags", &wg)
+
+	go writeWayHelper(Db.WriteWays, waysToWrite, "Ways", &wg)
+	go writeWayHelper(Db.WriteWayTags, wayTagsToWrite, "Way Tags", &wg)
+	go writeWayHelper(Db.WriteWayNodes, wayNodesToWrite, "Way Nodes ", &wg)
+
+	go writeRelationHelper(Db.WriteRelation, relationChannel, "Relations", &wg)
+	go writeRelationHelper(Db.WriteRelationMembers, relationMembersChannel, "Relation Member", &wg)
+	go writeRelationHelper(Db.WriteRelationTags, relationTagsChannel, "Relation Tags", &wg)
+
 	go func() {
 		for nodes := range pbfCoords {
 			for _, node := range nodes {
@@ -151,4 +107,25 @@ func WriteToDatabase(PbfFileName string, Db database.OSMDatabase) error {
 	}
 
 	return nil
+}
+
+func writeNodeHelper(function func(chan element.Node) error, channel chan element.Node, tag string, wg *sync.WaitGroup) {
+	if err := function(channel); err != nil {
+		log.Println(tag, ":", err)
+	}
+	wg.Done()
+}
+
+func writeWayHelper(function func(chan element.Way) error, channel chan element.Way, tag string, wg *sync.WaitGroup) {
+	if err := function(channel); err != nil {
+		log.Println(tag, ":", err)
+	}
+	wg.Done()
+}
+
+func writeRelationHelper(function func(chan element.Relation) error, channel chan element.Relation, tag string, wg *sync.WaitGroup) {
+	if err := function(channel); err != nil {
+		log.Println(tag, ":", err)
+	}
+	wg.Done()
 }
