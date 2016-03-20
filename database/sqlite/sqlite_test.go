@@ -2,9 +2,11 @@ package sqlite
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -36,20 +38,26 @@ func TestSqlite(t *testing.T) {
 	elements.Node.Id = 100
 	elements.Way.Id = 200
 	elements.Relation.Id = 100
-	db := CreateTest()
+	db, err := CreateTest()
+	if err != nil {
+		t.Error(err)
+	}
 	InsertTest(db, elements)
-	readTest(db, elements)
+	err = readTest(db, elements)
+	if err != nil {
+		t.Error(err)
+	}
 	db.Close()
 	os.Remove(TESTDB)
 
 }
 
-func CreateTest() *SQLiteDatabase {
+func CreateTest() (*SQLiteDatabase, error) {
 	db, err := CreateEmpty(TESTDB, SCHEMAFILE)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return db
+	return db, err
 }
 
 func InsertTest(db *SQLiteDatabase, elements TestBundle) {
@@ -156,85 +164,50 @@ func InsertTest(db *SQLiteDatabase, elements TestBundle) {
 	db.Commit()
 }
 
-func readTest(db *SQLiteDatabase, elements TestBundle) {
-	checkNode(db, elements)
-	checkWay(db, elements)
-	checkRelation(db, elements)
+func readTest(db *SQLiteDatabase, elements TestBundle) (err error) {
+	if err = checkNode(db, elements); err != nil {
+		return
+	}
+	if err = checkWay(db, elements); err != nil {
+		return
+	}
+	if err = checkRelation(db, elements); err != nil {
+		return
+	}
+	return
 }
 
-func checkNode(db *SQLiteDatabase, elements TestBundle) {
+func checkNode(db *SQLiteDatabase, elements TestBundle) (err error) {
 	node, err := db.ReadNode(elements.Node.Id)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
-	nodeTags, err := db.ReadNodeTag(elements.Node.Id)
-	if err != nil {
-		log.Fatal(err)
+	if !reflect.DeepEqual(node, elements.Node) {
+		err = errors.New("Node:Corrupt")
 	}
-	if node.Lat != elements.Node.Lat && node.Long != elements.Node.Long {
-		log.Fatal("Node:Mismatched Latitude and longitude")
-	}
-	for key, value := range nodeTags {
-		if elements.Node.Tags[key] != value {
-			log.Fatal("Node:Mismatched Tags")
-		}
-	}
+	return
 }
 
-func checkWay(db *SQLiteDatabase, elements TestBundle) {
-	_, err := db.ReadWay(elements.Way.Id)
+func checkWay(db *SQLiteDatabase, elements TestBundle) (err error) {
+	way, err := db.ReadWay(elements.Way.Id)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
-	wayTags, err := db.ReadWayTags(elements.Way.Id)
-	if err != nil {
-		log.Fatal(err)
+	if !reflect.DeepEqual(way, elements.Way) {
+		err = errors.New("Way:Corrupt")
+		return
 	}
-	wayNodes, err := db.ReadWayNodes(elements.Way.Id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for key, value := range wayTags {
-		if elements.Way.Tags[key] != value {
-			log.Fatal("Way:Mismatched Tags")
-		}
-	}
-	if len(wayNodes) != len(elements.Way.Refs) {
-		log.Fatal("Way:Mismatched Node length")
-	}
-	for i, num := range wayNodes {
-		if elements.Way.Refs[i] != num {
-			log.Fatal("Way:Mismatched Node")
-		}
-	}
+	return
 }
 
-func checkRelation(db *SQLiteDatabase, elements TestBundle) {
-	_, err := db.ReadRelation(elements.Relation.Id)
+func checkRelation(db *SQLiteDatabase, elements TestBundle) (err error) {
+	relation, err := db.ReadRelation(elements.Relation.Id)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
-	relationTags, err := db.ReadRelationTags(elements.Relation.Id)
-	if err != nil {
-		log.Fatal(err)
+	if !reflect.DeepEqual(relation, elements.Relation) {
+		err = errors.New("Relation:Corrupt")
+		return
 	}
-	Members, err := db.ReadRelationMembers(elements.Relation.Id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for key, value := range relationTags {
-		if elements.Relation.Tags[key] != value {
-			log.Fatal("Relation:Mismatched Tags")
-		}
-	}
-	if len(Members) != len(elements.Relation.Members) {
-		log.Fatal("Relation:Mismatched Member length")
-	}
-	for i, member := range Members {
-		orginalMember := elements.Relation.Members[i]
-		if orginalMember.Id != member.Id && orginalMember.Role != member.Role && orginalMember.Type != member.Type {
-			log.Fatal("Relation:Mismatched Member")
-		}
-	}
-
+	return
 }

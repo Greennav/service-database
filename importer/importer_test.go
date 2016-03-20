@@ -1,6 +1,7 @@
 package importer_test
 
 import (
+	//"fmt"
 	"os"
 	"testing"
 
@@ -22,5 +23,12 @@ func TestWriteToSQLiteDatabase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	/*osm, err := db.ReadEverythingWithinCoordinates(43.731341, 7.421213, 43.729883, 7.422897)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("Stats of ReadEverythingWithinCoordinates between 43.731341 N, 7.421213 E, 43.729883 N, 7.422897 E\n"+
+		"Nodes:%d\nWay:%d\n", len(osm.Nodes), len(osm.Ways))*/
+	db.Close()
 	os.Remove(TESTDATABASE)
 }
