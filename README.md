@@ -1,7 +1,10 @@
 # Database Service
 
-Database service in Go for the GreenNav project    
-This repository contains code which follows the [Design plan for database service](https://github.com/Greennav/greennav.github.io/blob/master/wiki/Roadmap.md#design-plan)
+This is going to be the database service/tool, that feeds the OSM data as well as other sources
+ into different databases to use them for routing.
+
+The code is currently written in Go and is able to extract routing data from PBF files and storing
+it in a sqlite database.
 
 ## Setup Instructions:
   
