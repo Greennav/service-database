@@ -22,7 +22,15 @@ type OSMDatabase interface {
 	WriteRelationTags(Relations chan element.Relation) error
 	WriteRelationMembers(Relations chan element.Relation) error
 
-	GetEverythingWithinCoordinates(FromLong, FromLat, ToLong, ToLat int) (*OSMData, error)
+	ReadNode(Id int64) (node element.Node, err error)
+	ReadWay(Id int64) (way element.Way, err error)
+	ReadRelation(id int64) (relation element.Relation, err error)
+
+	ReadNodesByCoordinates(FromLat, FromLon, ToLat, ToLon float64) (nodes []element.Node, err error)
+	ReadWaysByCoordinates(FromLat, FromLon, ToLat, ToLon float64) (ways []element.Way, err error)
+	ReadRelationsByCoordinates() (relations []element.Member, err error)
+
+	ReadEverythingWithinCoordinates(FromLat, FromLon, ToLat, ToLon float64) (*OSMData, error)
 
 	NewTransaction() error
 	Commit() error
